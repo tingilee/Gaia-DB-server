@@ -1,7 +1,7 @@
 
 var express = require('express'),
 	http = require('http'),
-	path = require('path'),
+    path = require('path'),
 	MongoClient = require('mongodb').MongoClient,
 	Server = require('mongodb').Server,
 	CollectionDriver = require('./collectionDriver').CollectionDriver;
@@ -33,19 +33,24 @@ mongoClient.open(function(err, mongoClient) {
 });
 
 // Get the entire collection (Table)
-app.get('/:collection', function(req, res) {
+app.get('/:collection/:format', function(req, res) {
    	var params = req.params; 
    	collectionDriver.findAll(req.params.collection, function(error, objs) { 
     	if (error) { 
     		res.send(400, error); 
     	} else { 
-	        if (req.accepts('html')) { 
-    	        res.render('data',{objects: objs, collection: req.params.collection}); //F
-              	
+          if (req.params.format == 'json') {
+            res.send(200, objs); 
+          } else if (req.params.format == 'table') {
+            if (req.accepts('html')) { 
+             res.render('data',{objects: objs, collection: req.params.collection}); //F
+              
             } else {
-	          	res.set('Content-Type','application/json');
+              res.set('Content-Type','application/json');
                 res.send(200, objs); 
             }
+          }
+	        
         }
    	});
 });
@@ -57,7 +62,7 @@ app.get('/:collection/:entity', function(req, res) {
    	var collection = params.collection;
    	if (entity) {
        	collectionDriver.get(collection, entity, function(error, objs) { 
-          	if (error) { res.send(400, error); }
+          if (error) { res.send(400, error); }
          	else { res.send(200, objs); }
        });
    	} else {

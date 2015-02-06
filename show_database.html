@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<script>
+/*
+function loadXMLDoc()
+{
+  alert("a");
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.onreadystatechange=function()
+  {
+  if (xmlhttp.readyState==4 && xmlhttp.status==200)
+    {
+      alert("200 ok");
+    document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+    }
+}
+xmlhttp.open("GET","www.google.com",true);
+xmlhttp.send();
+}
+loadXMLDoc();
+*/
+$(document).ready(function(){
+    $("button").click(function(){
+      alert("a");
+        $.get("demo_test.asp", function(data, status){
+            alert("Data: " + data + "\nStatus: " + status);
+        });
+    });
+});
+</script>
+</head>
+<body>
+
+<button>Send an HTTP GET request to a page and get the result back</button>
+
+<!-- "longitude" (required), "latitude" (required), "title" (required), "source", "description", "imageURL" -->
+<div class="container">
+  <h2>Database query</h2>
+  <p>The form below contains two input elements; one of type text and one of type password:</p>
+  <form role="form">
+    <div class="form-group">
+      <label for="usr">Location:</label>
+      <input type="text" class="form-control" id="usr">
+    </div>
+    <div class="form-group">
+      <label for="pwd">Password:</label>
+      <input type="password" class="form-control" id="pwd">
+    </div>
+  </form>
+</div>
+
+</body>
+</html>
+
