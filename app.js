@@ -2,6 +2,7 @@
 var express = require('express'),
 	http = require('http'),
     path = require('path'),
+    url = require('url'),
 	MongoClient = require('mongodb').MongoClient,
 	Server = require('mongodb').Server,
 	CollectionDriver = require('./collectionDriver').CollectionDriver;
@@ -34,6 +35,7 @@ mongoClient.open(function(err, mongoClient) {
 
 // Get the entire collection (Table)
 app.get('/:collection/:format', function(req, res) {
+
    	var params = req.params; 
    	collectionDriver.findAll(req.params.collection, function(error, objs) { 
     	if (error) { 
@@ -43,16 +45,41 @@ app.get('/:collection/:format', function(req, res) {
             res.send(200, objs); 
           } else if (req.params.format == 'table') {
             if (req.accepts('html')) { 
-             res.render('data',{objects: objs, collection: req.params.collection}); //F
+                res.render('data',{objects: objs, collection: req.params.collection}); //F
               
             } else {
-              res.set('Content-Type','application/json');
+                res.set('Content-Type','application/json');
                 res.send(200, objs); 
             }
           }
 	        
         }
    	});
+});
+
+app.get('/', function(req, res){
+  res.send('id: ' + req.query.id);
+});
+
+// gets the collection by filtering on locations
+app.get('/:collection', function(req, res) {
+    // find a square
+    console.log("findNearby");
+    
+    var url_parts = url.parse(req.url, true);
+    var params = url_parts.query;
+    var minlon = parseInt(params.minlon);
+    var maxlon = parseInt(params.maxlon);
+    var minlat = parseInt(params.minlat);
+    var maxlat = parseInt(params.maxlat);
+    console.log(params);
+    console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+
+    collectionDriver.findNearby(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
+        if (error)
+            res.send(400, error);
+        res.send(200, objs); 
+    });
 });
  
 // Get specific item
@@ -73,12 +100,15 @@ app.get('/:collection/:entity', function(req, res) {
 function filterObjection(object) {
 	var newObj = {};
     // filter out the fields to store
-    if (object.longitude && object.latitude) {
+    if (object.longitude && object.latitude) {  // make sure this place exists
     	newObj.longitude = object.longitude;
     	newObj.latitude = object.latitude;
     	newObj.title = object.title;
     	newObj.source = object.source;
     	newObj.description = object.description;
+        newObj.imageURL = object.imageURL;
+        newObj.text = object.text;
+        newObj.premanentLink = object.premanentLink;
     }
     return newObj;
 }

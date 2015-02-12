@@ -25,6 +25,24 @@ CollectionDriver.prototype.findAll = function(collectionName, callback) {
     });
 };
 
+CollectionDriver.prototype.findNearby = function(collectionName, minlon, maxlon, minlat, maxlat, callback) {
+    // console.log("collectionName: " + collectionName);
+    // console.log("longitude: " + minlon + " to " + maxlon);
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) {
+            callback(error);
+        } else {
+            the_collection.find( {"longitude": {$gt: minlon, $lt: maxlon}, "latitude": {$gt: minlat, $lt: maxlat} } ).toArray(function(error, results) {
+                if (error) 
+                    callback(error); 
+                else
+                    callback(null, results);
+            });
+        }
+
+    });    
+}
+
 CollectionDriver.prototype.get = function(collectionName, id, callback) { //A
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) callback(error);
