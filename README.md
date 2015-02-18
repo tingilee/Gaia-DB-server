@@ -1,6 +1,9 @@
 # Gaia-DB-server
 
-##To start the server:
+This is a database server that stores NoSql location related information
+
+## To start the server:
+	mongod 
 	forever start app.js 
 
 **************************************
