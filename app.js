@@ -81,10 +81,6 @@ app.get('/', function(req, res){
 app.get('/:collection', function(req, res) {
     // find a square
     console.log("findNearby");
-    req.header('Access-Control-Allow-Origin', '*');
-    req.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    req.header('Access-Control-Allow-Headers', 'Content-Type');
-
     
     var url_parts = url.parse(req.url, true);
     var params = url_parts.query;
@@ -179,7 +175,10 @@ app.delete('/:collection/:entity', function(req, res) {
 });
 
 app.get('/', function (req, res) {
-  res.send('<html><body><h1>Hello World</h1></body></html>');
+    console.log("cross-origin");
+    res.writeHead(200, {'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*'});
+    res.write("<p>Hello World</p>");
+    res.end();
 });
  
 // default

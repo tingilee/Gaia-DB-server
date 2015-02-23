@@ -29,12 +29,12 @@ app.use(function(req,res,next){
     next();
 });
 
-//app.use('/', routes);
-
 app.get('/', function(req, res) {
 	console.log("cross-origin");
-	res.writeHead(200, {'Content-Type': 'text', 'Access-Control-Allow-Origin': '*'});
-  	res.send('<html><body><h1>Hello World</h1></body></html>');
+	res.writeHead(200, {'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*'});
+  	res.write("<p>Hello World</p>");
+  	res.end();
+  	//res.send('<html><body><h1>Hello World</h1></body></html>');
 
 
 });
