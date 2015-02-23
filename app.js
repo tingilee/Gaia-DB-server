@@ -11,8 +11,10 @@ var mongoHost = 'localHost'; // Mongo host by default
 var mongoPort = 27017; // Mongo port by default 
 var PORT = 3000; // port of the server
 var collectionDriver;
-
 var app = express();
+
+/********** CONFIG **************************/
+
 app.set('port', PORT); 
 app.set('views', path.join(__dirname, 'views')); 
 app.set('view engine', 'jade'); 
@@ -20,8 +22,14 @@ app.set('view engine', 'jade');
 // after the app.set lines, but before any app.use or app.get lines:
 // express now parses the incoming body data
 app.use(express.bodyParser());
-
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(function(req,res,next){
+    res.header('Access-Control-Allow-Origin', "*");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
  
 var mongoClient = new MongoClient(new Server(mongoHost, mongoPort)); 
 mongoClient.open(function(err, mongoClient) { 
@@ -32,6 +40,14 @@ mongoClient.open(function(err, mongoClient) {
   	var db = mongoClient.db("MyDatabase");  
   	collectionDriver = new CollectionDriver(db); 
 });
+
+app.all('/', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  next();
+ });
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Get the entire collection (Table)
 app.get('/:collection/:format', function(req, res) {
@@ -65,6 +81,10 @@ app.get('/', function(req, res){
 app.get('/:collection', function(req, res) {
     // find a square
     console.log("findNearby");
+    req.header('Access-Control-Allow-Origin', '*');
+    req.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    req.header('Access-Control-Allow-Headers', 'Content-Type');
+
     
     var url_parts = url.parse(req.url, true);
     var params = url_parts.query;
