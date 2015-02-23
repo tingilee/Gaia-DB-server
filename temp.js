@@ -15,6 +15,7 @@ var PORT = 4000; // port of the server
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade'); 
 app.set('port', PORT); 
+//app.set("jsonp callback", true);
 
 app.use(express.bodyParser());
 //app.use(bodyParser.urlencoded());
@@ -25,20 +26,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(function(req,res,next){
     res.header('Access-Control-Allow-Origin', "*");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods');
     next();
 });
 
 app.get('/', function(req, res) {
-	var result = [];
-	result.push({'a': 'a', 'b': 'b');
-	res.writeHead(200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'});
-  	
-  	res.write(result);
-  	res.end();
+//	res.writeHead(200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'});
+  //	res.write(JSON.stringify({'a':'a'}));
+  	//	res.end();
   	//res.send('<html><body><h1>Hello World</h1></body></html>');
+	res.writeHeader(200, {"Content-Type": "text/html"});  
+        res.write('<html><body><h1>Hello World</h1></body></html>');  
+        res.end();  
 
-
+//res.jsonp({ "my": "object" });
 });
 
 app.use(function (req,res) {
