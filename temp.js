@@ -35,9 +35,9 @@ app.get('/', function(req, res) {
   //	res.write(JSON.stringify({'a':'a'}));
   	//	res.end();
   	//res.send('<html><body><h1>Hello World</h1></body></html>');
-	res.writeHeader(200, {"Content-Type": "text/html"});  
-        res.write('<html><body><h1>Hello World</h1></body></html>');  
-        res.end();  
+	res.header("Content-Type", "text/html");  
+    res.write('<html><body><h1>Hello World</h1></body></html>');  
+    res.end();  
 
 //res.jsonp({ "my": "object" });
 });
