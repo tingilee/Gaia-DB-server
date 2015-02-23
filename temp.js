@@ -30,9 +30,11 @@ app.use(function(req,res,next){
 });
 
 app.get('/', function(req, res) {
-	console.log("cross-origin");
-	res.writeHead(200, {'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*'});
-  	res.write("<p>Hello World</p>");
+	var result = [];
+	result.push({'a': 'a', 'b': 'b');
+	res.writeHead(200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'});
+  	
+  	res.write(result);
   	res.end();
   	//res.send('<html><body><h1>Hello World</h1></body></html>');
 
