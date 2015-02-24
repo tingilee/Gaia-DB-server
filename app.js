@@ -94,6 +94,7 @@ app.get('/:collection', function(req, res) {
     collectionDriver.findNearby(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
         if (error)
             res.send(400, error);
+        res.set('Content-Type','application/json');
         res.send(200, objs); 
     });
 });
@@ -175,10 +176,9 @@ app.delete('/:collection/:entity', function(req, res) {
 });
 
 app.get('/', function (req, res) {
-    console.log("cross-origin");
-    res.writeHead(200, {'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*'});
-    res.write("<p>Hello World</p>");
-    res.end();
+    res.header("Content-Type", "text/html");  
+    res.write('<html><body><h1>Hello Gaia</h1></body></html>');  
+    res.end();  
 });
  
 // default
