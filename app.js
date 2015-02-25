@@ -5,11 +5,11 @@ var express = require('express'),
     url = require('url'),
 	MongoClient = require('mongodb').MongoClient,
 	Server = require('mongodb').Server,
-	CollectionDriver = require('./collectionDriver').CollectionDriver;
+	CollectionDriver = require('./collectionDriverGaia').CollectionDriver;
 
 var mongoHost = 'localHost'; // Mongo host by default 
 var mongoPort = 27017; // Mongo port by default 
-var PORT = 3000; // port of the server
+var PORT = 3001; // port of the server
 var collectionDriver;
 var app = express();
 
@@ -114,33 +114,28 @@ app.get('/:collection/:entity', function(req, res) {
    	}
 });
 
-function filterObjection(object) {
-	var newObj = {};
-    // filter out the fields to store
-    if (object.longitude && object.latitude) {  // make sure this place exists
-    	newObj.longitude = object.longitude;
-    	newObj.latitude = object.latitude;
-    	newObj.title = object.title;
-    	newObj.source = object.source;
-    	newObj.description = object.description;
-        newObj.imageURL = object.imageURL;
-        newObj.text = object.text;
-        newObj.premanentLink = object.premanentLink;
-    }
-    return newObj;
-}
-
-// Add item to collection 
+// Add item/items to collection 
 app.post('/:collection', function(req, res) {
     var object = req.body;
+    var length = object.length;
     var collection = req.params.collection;
-    var newObj = filterObjection(object);
-    console.log(newObj + " is now added to collection " + collection);	// print Json
+    var count = 0;
+    var response = "";
+    var error_message = "";
 
-    collectionDriver.save(collection, newObj, function(err,docs) {
-          if (err) { res.send(400, err); } 
-          else { res.send(201, docs); }
-     });
+    if (!length) {      // single item. undefined array length
+        console.log("insert 1 item in " + collection);
+        collectionDriver.save(collection, object, function(err, docs) {
+            if (err) { res.send(400, err);  } 
+            else { res.send(201, docs); }
+        });
+    } else { 
+        console.log("insert " + length + " items in " + collection);              
+        collectionDriver.saveBulk(collection, object, function(err, docs) {
+            if (err) { res.send(400, err);  } 
+            else { res.send(201, docs); }
+        });
+    }
 });
 
 // Update the item 
@@ -150,8 +145,8 @@ app.put('/:collection/:entity', function(req, res) {
     var collection = params.collection;
     if (entity) {
        collectionDriver.update(collection, req.body, entity, function(error, objs) { //B
-          if (error) { res.send(400, error); }
-          else { res.send(200, objs); }
+            if (error) { res.send(400, error); }
+            else { res.send(200, objs); }
        });
    } else {
        var error = { "message" : "Cannot PUT a whole collection" };

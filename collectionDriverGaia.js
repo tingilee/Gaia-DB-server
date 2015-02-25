@@ -6,6 +6,24 @@ CollectionDriver = function(db) {
   this.db = db;
 };
 
+var filter_item = function(object) {
+    var newObj = {};
+    // filter out the fields to store
+    console.log("filter_item: " + object.longitude + object.latitude);
+    if (object.longitude && object.latitude) {  // make sure this place exists
+        newObj.longitude = object.longitude;
+        newObj.latitude = object.latitude;
+        newObj.title = object.title;
+        newObj.source = object.source;
+        newObj.description = object.description;
+        newObj.imageURL = object.imageURL;
+        newObj.text = object.text;
+        newObj.premanentLink = object.premanentLink;
+        newObj.index = object.index;        // For ranking.
+    }
+    return newObj;
+}
+
 CollectionDriver.prototype.getCollection = function(collectionName, callback) {
   this.db.collection(collectionName, function(error, the_collection) {
     if( error ) callback(error);
@@ -57,14 +75,32 @@ CollectionDriver.prototype.get = function(collectionName, id, callback) { //A
     });
 };
 
-//save new object
+//insert/save one item
 CollectionDriver.prototype.save = function(collectionName, obj, callback) {
-    this.getCollection(collectionName, function(error, the_collection) { //A
+    this.getCollection(collectionName, function(error, the_collection) { 
+        if( error ) callback(error)
+        else {
+            obj = filter_item(obj);
+            obj.time_created = new Date(); 
+            the_collection.insert(obj, function() { 
+                callback(null, obj);
+            });
+        }
+    });
+};
+
+//save an array of objects
+CollectionDriver.prototype.saveBulk = function(collectionName, obj, callback) {
+    this.getCollection(collectionName, function(error, the_collection) { 
       if( error ) callback(error)
       else {
-        obj.time_created = new Date(); //B
-        the_collection.insert(obj, function() { //C
-          callback(null, obj);
+        var date = new Date(); 
+        for (var i = 0; i < obj.length; i++) {
+            obj[i] = filter_item(obj[i]);
+            obj[i].time_created = date;
+        }
+        the_collection.insert(obj, function() {
+            callback(null, obj);
         });
       }
     });
