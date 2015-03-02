@@ -178,6 +178,30 @@ CollectionDriver.prototype.addMedia = function(collectionName, media_item, sourc
     });
 };
 
+//  ADD this media item info to the media array
+//  essentially each post is an item
+CollectionDriver.prototype.addMediaBulk = function(collectionName, media_item, source, id, callback) {
+    var obj = null;
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) callback(error);
+        else {
+            var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$"); //B
+            if (!checkForHexRegExp.test(id)) {
+                callback({error: "invalid id"});
+            } else {
+                //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
+                var update = { $push : {} };
+                update.$push['media.' + source] = { $each: media_item}; 
+                the_collection.update(  {'_id':ObjectID(id)}, update,
+                                        function(error,doc) { 
+                                            if (error) callback(error);
+                                            else callback(null, doc);
+                                        });
+            }
+        }
+    });
+};
+
 //  update this given media item 
 // Should it over cover all the media item (now) OR should it be adding to the media fields individually 
 CollectionDriver.prototype.updateMedia = function(collectionName, media_item, id, entityId, callback) {

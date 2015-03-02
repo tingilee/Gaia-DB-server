@@ -212,16 +212,18 @@ function filterMedia(object) {
     for (var key in object) {
         if (key == 'location_id' | key == 'post_id' | key == 'text' | key == 'tags' | key == 'image_url' | 
             key == 'link' | key == 'rating') {
-            newObj.key = object.key;   
-            console.log(key + object.key);
+            newObj[key] = object[key];   
+            console.log(key + object[key]);
         }
     }
+    return newObj;
 }
 
 // Add a media item to the media array     
 // /:collection/addMedia?id=      &source=
 app.put('/:collection/addMedia', function(req, res) {
     var object = req.body;
+    var length = object.length;
     var collection = req.params.collection;
 
     var url_parts = url.parse(req.url, true);
@@ -234,14 +236,36 @@ app.put('/:collection/addMedia', function(req, res) {
         res.send(400, {error: 'no such collection'}); 
     }
 
-    if (entityid) {
-       collectionDriver.addMedia(collection, object, source, entityid, function(error, objs) {
-            if (error) { res.send(400, error); }
-            else { res.send(200, objs); }
-       });
-    } else {
-       var error = { error : 'No item _id given'};
-       res.send(400, error);
+    if (!length) {  // it's just an element
+        object = filterMedia(object);
+
+        if (entityid && source) {
+           collectionDriver.addMedia(collection, object, source, entityid, function(error, objs) {
+                if (error) { res.send(400, error); }
+                else { res.send(200, objs); }
+           });
+        } else {
+           var error = { error : 'No item _id or source given'};
+           res.send(400, error);
+        }
+    } else {        // media array
+        var array = object;
+        var filtered_array = [];
+        for (var i = 0; i < length; i++) {
+            var entry = array[i];
+            entry = filterMedia(entry);
+            filtered_array.push(entry);
+        }
+        
+        if (entityid && source) {
+           collectionDriver.addMediaBulk(collection, object, source, entityid, function(error, objs) {  
+                if (error) { res.send(400, error); }
+                else { res.send(200, objs); }
+           });
+        } else {
+           var error = { error : 'No item _id or source given'};
+           res.send(400, error);
+        }
     }
 });
 
