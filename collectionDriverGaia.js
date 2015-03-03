@@ -62,34 +62,7 @@ CollectionDriver.prototype.findAll = function(collectionName, callback) {
     });
 };
 
-CollectionDriver.prototype.findInBox = function(collectionName, minlon, maxlon, minlat, maxlat, callback) {
-    // console.log("collectionName: " + collectionName);
-    // console.log("longitude: " + minlon + " to " + maxlon);
-
-    // loc: { $geoWithin: { $box:  [ [ 0, 0 ], [ 100, 100 ] ] } }
-    //                               <bottom left [lon, lat] >, <upper right [lon, lat] >
-    this.getCollection(collectionName, function(error, the_collection) {
-        if (error) {
-            callback(error);
-        } else {
-            the_collection.find( {'coordinates': 
-                                    { $geoWithin: 
-                                        { $box:  [ 
-                                            [ minlon, minlat ], 
-                                            [ maxlon, maxlat ] 
-                                          ] 
-                                        } 
-                                    }}).toArray(function(error, results) {
-                                                    console.log("Results: " + results);
-                                                    if (error) 
-                                                        callback(error); 
-                                                    else
-                                                        callback(null, results);    });
-        }
-    });    
-}
-
-CollectionDriver.prototype.findInPolygon = function(collectionName, minlon, maxlon, minlat, maxlat, callback){
+CollectionDriver.prototype.findInBox = function(collectionName, minlon, maxlon, minlat, maxlat, callback){
     console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) {
@@ -116,21 +89,28 @@ CollectionDriver.prototype.findInPolygon = function(collectionName, minlon, maxl
     });
 }
 
-CollectionDriver.prototype.findInCircle = function(collectionName, minlon, maxlon, minlat, maxlat, callback) {
-    // console.log("collectionName: " + collectionName);
-    // console.log("longitude: " + minlon + " to " + maxlon);
+CollectionDriver.prototype.findInCircle = function(collectionName, center_lon, center_lat, min_dist, max_dist, callback) {
+    console.log("collectionName: " + collectionName);
+    console.log("Params: " + center_lon + ", " + center_lat + " with distance between meters " + min_dist + " , " + max_dist);
 
-    // loc: { $geoWithin: { $box:  [ [ 0, 0 ], [ 100, 100 ] ] } }
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) {
             callback(error);
         } else {
-            the_collection.find( {"longitude": {$gt: minlon, $lt: maxlon}, "latitude": {$gt: minlat, $lt: maxlat} } ).toArray(function(error, results) {
-                if (error) 
-                    callback(error); 
-                else
-                    callback(null, results);
-            });
+            console.log("try to find in this collection: " + collectionName);
+            the_collection.find({
+                                    geoNear: "loc.coordinates",
+                                    near: { type: "Point", coordinates: [ center_lon, center_lat] },
+                                    spherical: true,
+                                    query: { }, // ex) query: { category: "public" },
+                                    minDistance: min_dist,      // in meters
+                                    maxDistance: max_dist
+
+                                }).toArray(function(error, results) {
+                                                    if (error) 
+                                                        callback(error); 
+                                                    else
+                                                        callback(null, results);    });
         }
 
     });    

@@ -140,6 +140,9 @@ app.get('/:collection/filter/:method', function(req, res) {
     var collection = params.collection;
     var method = params.method;
 
+    var url_parts = url.parse(req.url, true);
+    var params = url_parts.query;
+
     console.log("filter: " + req.url);
     // find a square
     if (!checkGaiaDB(collection)) {
@@ -147,32 +150,21 @@ app.get('/:collection/filter/:method', function(req, res) {
     }
     
     if (method == 'circle') {
+        var center_lon = filterFloat(params.center_lon);    
+        var center_lat = filterFloat(params.center_lat);
+        var min_dist = parseInt(params.min_dist);       // meters in integer
+        var max_dist = parseInt(params.max_dist);
 
-
-    } else if (method == 'polygon') {
-        var url_parts = url.parse(req.url, true);
-        var params = url_parts.query;
-        var minlon = filterFloat(params.minlon);
-        var maxlon = filterFloat(params.maxlon);
-        var minlat = filterFloat(params.minlat);
-        var maxlat = filterFloat(params.maxlat);
-        console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
-
-
-        collectionDriver.findInPolygon(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
+        collectionDriver.findInCircle(req.params.collection,  center_lon, center_lat, min_dist, max_dist, function(error, objs) { 
             if (error) {
                 res.send(400, error);
             } else {
                 res.set('Content-Type','application/json');
                 res.send(200, objs); 
-            }});
-    
-
+            }
+        });
 
     } else if (method == 'box') {
-
-        var url_parts = url.parse(req.url, true);
-        var params = url_parts.query;
         var minlon = filterFloat(params.minlon);
         var maxlon = filterFloat(params.maxlon);
         var minlat = filterFloat(params.minlat);
