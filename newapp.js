@@ -9,7 +9,7 @@ var express = require('express'),
 
 var mongoHost = 'localHost'; // Mongo host by default 
 var mongoPort = 27017; // Mongo port by default 
-var PORT = 3001; // port of the server
+var PORT = 3000; // port of the server
 var collectionDriver;
 var app = express();
 
