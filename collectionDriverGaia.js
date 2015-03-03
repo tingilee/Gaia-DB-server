@@ -28,36 +28,26 @@ var ObjectID = require('mongodb').ObjectID;
 
 // self - current context
 CollectionDriver = function(db) {
-  this.db = db;
+    this.db = db;
 };
 
-/*
-var filter_item = function(object) {
-    var newObj = {};
-    // filter out the fields to store
-    console.log("filter_item: " + object.longitude + object.latitude);
-    if (object.longitude && object.latitude) {  // make sure this place exists
-        newObj.coordinates = object.
-        newObj.longitude = object.longitude;
-        newObj.latitude = object.latitude;
-        newObj.title = object.title;
-        newObj.source = object.source;
-        newObj.description = object.description;
-        newObj.imageURL = object.imageURL;
-        newObj.text = object.text;
-        newObj.premanentLink = object.premanentLink;
-        newObj.index = object.index;        // For ranking.
-        newObj.category = object.category; 
-    }
-    return newObj;
+CollectionDriver.prototype.addLocation2dsphereIndex = function(collectionName, callback) {
+    this.db.collection(collectionName, function(error, the_collection) {
+        if( error ) callback(error);
+        else {
+            the_collection.ensureIndex( { 'loc.coordinates': "2dsphere" }, {bits: 32}, function(error, results) { // this returns a write concern obj
+                if (error) callback(error);
+                else callback(null, results);
+            });
+        }
+    });
 }
-*/
 
 CollectionDriver.prototype.getCollection = function(collectionName, callback) {
-  this.db.collection(collectionName, function(error, the_collection) {
-    if( error ) callback(error);
-    else callback(null, the_collection);
-  });
+    this.db.collection(collectionName, function(error, the_collection) {
+        if( error ) callback(error);
+        else callback(null, the_collection);
+    });
 };
 
 CollectionDriver.prototype.findAll = function(collectionName, callback) {
@@ -72,9 +62,65 @@ CollectionDriver.prototype.findAll = function(collectionName, callback) {
     });
 };
 
-CollectionDriver.prototype.findNearby = function(collectionName, minlon, maxlon, minlat, maxlat, callback) {
+CollectionDriver.prototype.findInBox = function(collectionName, minlon, maxlon, minlat, maxlat, callback) {
     // console.log("collectionName: " + collectionName);
     // console.log("longitude: " + minlon + " to " + maxlon);
+
+    // loc: { $geoWithin: { $box:  [ [ 0, 0 ], [ 100, 100 ] ] } }
+    //                               <bottom left [lon, lat] >, <upper right [lon, lat] >
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) {
+            callback(error);
+        } else {
+            the_collection.find( {'coordinates': 
+                                    { $geoWithin: 
+                                        { $box:  [ 
+                                            [ minlon, minlat ], 
+                                            [ maxlon, maxlat ] 
+                                          ] 
+                                        } 
+                                    }}).toArray(function(error, results) {
+                                                    console.log("Results: " + results);
+                                                    if (error) 
+                                                        callback(error); 
+                                                    else
+                                                        callback(null, results);    });
+        }
+    });    
+}
+
+CollectionDriver.prototype.findInPolygon = function(collectionName, minlon, maxlon, minlat, maxlat, callback){
+    console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) {
+            callback(error);
+        } else {
+            the_collection.find({'loc.coordinates' :
+                {$geoWithin :
+                    {$geometry :
+                       {type : "Polygon" ,
+                           coordinates : [[[minlon, minlat] , 
+                                           [minlon, maxlat], 
+                                           [maxlon, maxlat],
+                                           [maxlon, minlat],
+                                           [minlon, minlat]]]                                     
+                        } 
+                    } 
+                } 
+            }).toArray( function(error, results) {
+                                                if (error) 
+                                                    callback(error); 
+                                                else
+                                                    callback(null, results); });
+        }
+    });
+}
+
+CollectionDriver.prototype.findInCircle = function(collectionName, minlon, maxlon, minlat, maxlat, callback) {
+    // console.log("collectionName: " + collectionName);
+    // console.log("longitude: " + minlon + " to " + maxlon);
+
+    // loc: { $geoWithin: { $box:  [ [ 0, 0 ], [ 100, 100 ] ] } }
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) {
             callback(error);

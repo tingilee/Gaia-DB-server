@@ -41,6 +41,7 @@ mongoClient.open(function(err, mongoClient) {
   	collectionDriver = new CollectionDriver(db); 
 });
 
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.all('/', function(req, res, next) {
@@ -57,6 +58,22 @@ function checkGaiaDB(collectionName) {
 }
 
 /***************************        GET        ***************************/
+// Adds the index to collection
+// Call this after there's a few element
+app.get('/:collection/add2dsphereIndex', function(req, res) {
+    var collection = req.params.collection;
+    if (!checkGaiaDB(collection)) {
+        res.send(400, {error: 'no such collection'}); 
+    }
+
+    collectionDriver.addLocation2dsphereIndex(collection, function(error, objs) { 
+            if (error) {
+                res.send(400, error);
+            } else {
+                console.log(objs);
+                res.send(200, objs); 
+            }});      
+});
 
 // Get the entire collection (Table OR json)
 app.get('/:collection', function(req, res) {
@@ -110,34 +127,76 @@ app.get('/:collection/getitem', function(req, res) {
     }
 });
 
+var filterFloat = function (value) {
+    if(/^(\-|\+)?([0-9]+(\.[0-9]+)?|Infinity)$/
+      .test(value))
+      return Number(value);
+  return NaN;
+}
+
 // gets a subset of the collection by filtering on location coordinates
-app.get('/:collection/filter', function(req, res) {
+app.get('/:collection/filter/:method', function(req, res) {
+    var params = req.params;
+    var collection = params.collection;
+    var method = params.method;
+
     console.log("filter: " + req.url);
     // find a square
     if (!checkGaiaDB(collection)) {
         res.send(400, {error: 'no such collection'}); 
     }
     
-    var url_parts = url.parse(req.url, true);
-    var params = url_parts.query;
-    var minlon = parseInt(params.minlon);
-    var maxlon = parseInt(params.maxlon);
-    var minlat = parseInt(params.minlat);
-    var maxlat = parseInt(params.maxlat);
-    console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+    if (method == 'circle') {
 
-    collectionDriver.findNearby(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
-        if (error)
-            res.send(400, error);
-        res.set('Content-Type','application/json');
-        res.send(200, objs); 
-    });
+
+    } else if (method == 'polygon') {
+        var url_parts = url.parse(req.url, true);
+        var params = url_parts.query;
+        var minlon = filterFloat(params.minlon);
+        var maxlon = filterFloat(params.maxlon);
+        var minlat = filterFloat(params.minlat);
+        var maxlat = filterFloat(params.maxlat);
+        console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+
+
+        collectionDriver.findInPolygon(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
+            if (error) {
+                res.send(400, error);
+            } else {
+                res.set('Content-Type','application/json');
+                res.send(200, objs); 
+            }});
+    
+
+
+    } else if (method == 'box') {
+
+        var url_parts = url.parse(req.url, true);
+        var params = url_parts.query;
+        var minlon = filterFloat(params.minlon);
+        var maxlon = filterFloat(params.maxlon);
+        var minlat = filterFloat(params.minlat);
+        var maxlat = filterFloat(params.maxlat);
+        console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+            
+        collectionDriver.findInBox(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
+            if (error) {
+                res.send(400, error);
+            } else {
+                res.set('Content-Type','application/json');
+                res.send(200, objs); 
+            }
+        });
+    
+    }
+
 });
 
 /***************************        POST        ***************************/
 // Add item/items to collection 
 // Takes in the following:
-// {coordinates : [ <longitude> , <latitude> ],
+// {longitude: , 
+//  latitude: ,
 //  title: <place name>     ,
 //  category: <place types> ,
 //  source:   <source>,     (optional)
@@ -162,26 +221,30 @@ app.post('/:collection', function(req, res) {
 
     // loopover the array
     for (var i = 0; i < length; i++) {
-        var object = array[i];
+        var client_object = array[i];
+        var db_object = {};
         // filter and only put the qualified ones into the array
-        if (object.title && object.coordinates && object.category) { // need category??!!
-            if (!object.coordinates.length || object.coordinates.length != 2) {
-                error_message = {'error' : 'coordinates needs to be a 2 element array. coordinates : [ <longitude> , <latitude> ]'};
-            } else {
+        if (client_object.title && client_object.category && client_object.longitude && client_object.latitude) { // need category??!!
+            //if (!object.coordinates.length || object.coordinates.length != 2) {
+            //    error_message = {'error' : 'coordinates needs to be a 2 element array. coordinates : [ <longitude> , <latitude> ]'};
+            //} else {
                 // construct the right object.
-                object['rank'] = 0;    // initialize rank to 0 
-                object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
-                if (object.location_id && object.source) {
-                    var media_item = {"location_id" : object.location_id};
+                db_object['title'] = client_object.title;
+                db_object['category'] = client_object.category;
+                db_object['loc'] = {type: 'Point', coordinates: [client_object.longitude, client_object.latitude]};
+                db_object['rank'] = 0;    // initialize rank to 0 
+                db_object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
+                if (client_object.location_id && client_object.source) {
+                    var media_item = {"location_id" : client_object.location_id};
                     var media_array = [];
                     media_array.push(media_item);
-                    object['media'][object.source] = media_array;
+                    db_object['media'][client_object.source] = media_array;
                 }
-                db_insert_array.push(object);
+                db_insert_array.push(db_object);
                 count = count + 1;
-            }
+            //}
         } else {
-            error_message = {'error' : 'requires object title, coordinates, category'};
+            error_message = {'error' : 'requires object\'s title, longitude, latitude, category'};
         }
     }
 
@@ -236,7 +299,7 @@ app.put('/:collection/addMedia', function(req, res) {
         res.send(400, {error: 'no such collection'}); 
     }
 
-    if (!length) {  // it's just an element
+    if (!length) {  // an element
         object = filterMedia(object);
 
         if (entityid && source) {
@@ -248,7 +311,7 @@ app.put('/:collection/addMedia', function(req, res) {
            var error = { error : 'No item _id or source given'};
            res.send(400, error);
         }
-    } else {        // media array
+    } else {        // an array
         var array = object;
         var filtered_array = [];
         for (var i = 0; i < length; i++) {
@@ -256,7 +319,7 @@ app.put('/:collection/addMedia', function(req, res) {
             entry = filterMedia(entry);
             filtered_array.push(entry);
         }
-        
+
         if (entityid && source) {
            collectionDriver.addMediaBulk(collection, object, source, entityid, function(error, objs) {  
                 if (error) { res.send(400, error); }
@@ -269,9 +332,25 @@ app.put('/:collection/addMedia', function(req, res) {
     }
 });
 
+//  Updates the rank by incrementing or decrementing by that value
+//  ?id= &incvalue=
+app.put('/:collection/incrementRank', function(req, res) {
+    var collection = req.params.collection;
+    var url_parts = url.parse(req.url, true);
+    var params = url_parts.query;
+    var inc_value = params.incvalue;
+    var entityid = params.id;
+
+    collectionDriver.incrementRank(collection, inc_value, entityid, function(error, objs) {  
+        if (error) { res.send(400, error); }
+        else { res.send(200, objs); }
+    });
+});
+
 // Update the media information given the entity id and the source 
 // ?id= &source=
 // not really needed...
+/*
 app.put('/:collection/updateMedia', function(req, res) { 
     var object = req.body;
     var params = req.params;
@@ -287,7 +366,7 @@ app.put('/:collection/updateMedia', function(req, res) {
     }
 
     if (entityid) {
-       collectionDriver.addMedia(collection, object, entityid, function(error, objs) {
+       collectionDriver.updateMedia(collection, object, entityid, function(error, objs) {
             if (error) { res.send(400, error); }
             else { res.send(200, objs); }
        });
@@ -296,6 +375,7 @@ app.put('/:collection/updateMedia', function(req, res) {
        res.send(400, error);
    }
 });
+*/
 
 // Update the item to a totally different item
 app.put('/:collection/:entity', function(req, res) { 
