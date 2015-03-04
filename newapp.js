@@ -403,6 +403,18 @@ app.delete('/:collection/:entity', function(req, res) {
    }
 });
 
+/***************************        DELETE WHOLE COLLECTION (comment this out when its not needed)       ***************************/
+
+app.get('/:collection/removeCollection', function(req, res) {
+    var params = req.params;
+    var collection = params.collection;
+
+    collectionDriver.removeCollection(collection, function(error, objs) {
+        if (error) { res.send(400, error); }
+        else { res.send(200, objs); } 
+    });
+});
+
 /***************************        DEFAULT        ***************************/
 
 app.get('/', function (req, res) {

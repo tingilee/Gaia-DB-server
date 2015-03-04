@@ -31,6 +31,18 @@ CollectionDriver = function(db) {
     this.db = db;
 };
 
+CollectionDriver.prototype.removeCollection = function(collectionName, callback) {
+    this.db.collection(collectionName, function(error, the_collection) {
+        if( error ) callback(error);
+        else {
+            the_collection.remove({}, function(error, results) { 
+                if (error) callback(error);
+                else callback(null, results);
+            });
+        }
+    });
+}
+
 CollectionDriver.prototype.addLocation2dsphereIndex = function(collectionName, callback) {
     this.db.collection(collectionName, function(error, the_collection) {
         if( error ) callback(error);
