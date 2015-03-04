@@ -404,7 +404,7 @@ app.delete('/:collection/:entity', function(req, res) {
 });
 
 /***************************        DELETE WHOLE COLLECTION (comment this out when its not needed)       ***************************/
-
+/*
 app.get('/:collection/removeCollection', function(req, res) {
     var params = req.params;
     var collection = params.collection;
@@ -414,6 +414,7 @@ app.get('/:collection/removeCollection', function(req, res) {
         else { res.send(200, objs); } 
     });
 });
+*/
 
 /***************************        DEFAULT        ***************************/
 
