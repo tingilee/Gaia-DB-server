@@ -409,7 +409,7 @@ app.delete('/:collection/:entity', function(req, res) {
     if (entity) {
        collectionDriver.delete(collection, entity, function(error, objs) {
           if (error) { res.send(400, error); }
-          else { res.send(200, objs); } 
+          else { res.send(200, "Item id: " + entity + " is successfully deleted\n"); } 
        });
    } else {
        var error = { "message" : "Cannot DELETE a whole collection" };
