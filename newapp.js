@@ -169,17 +169,31 @@ app.get('/:collection/filter/:method', function(req, res) {
         var maxlon = filterFloat(params.maxlon);
         var minlat = filterFloat(params.minlat);
         var maxlat = filterFloat(params.maxlat);
+        var category = params.category;
         console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+        if (category) { 
+            collectionDriver.findInBoxGivenCategory(req.params.collection, minlon, maxlon, minlat, maxlat, category, function(error, objs) { 
+                if (error) {
+                    res.send(400, error);
+                } else {
+                    res.set('Content-Type','application/json');
+                    res.send(200, objs); 
+                }
+            });
+        
+        } else {
+            collectionDriver.findInBox(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
+                if (error) {
+                    res.send(400, error);
+                } else {
+                    res.set('Content-Type','application/json');
+                    res.send(200, objs); 
+                }
+            });
+        
+        }
             
-        collectionDriver.findInBox(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
-            if (error) {
-                res.send(400, error);
-            } else {
-                res.set('Content-Type','application/json');
-                res.send(200, objs); 
-            }
-        });
-    
+
     }
 
 });

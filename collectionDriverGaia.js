@@ -74,6 +74,33 @@ CollectionDriver.prototype.findAll = function(collectionName, callback) {
     });
 };
 
+CollectionDriver.prototype.findInBoxGivenCategory = function(collectionName, minlon, maxlon, minlat, maxlat, category, callback) {
+    console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) {
+            callback(error);
+        } else {
+            the_collection.find({'loc.coordinates' :
+                {$geoWithin :
+                    {$geometry :
+                       {type : "Polygon" ,
+                           coordinates : [[[minlon, minlat] , 
+                                           [minlon, maxlat], 
+                                           [maxlon, maxlat],
+                                           [maxlon, minlat],
+                                           [minlon, minlat]]]                                     
+                        } 
+                    } 
+                } 
+            , 'category' : category}).toArray( function(error, results) {
+                                                if (error) 
+                                                    callback(error); 
+                                                else
+                                                    callback(null, results); });
+        }
+    });
+}
+
 CollectionDriver.prototype.findInBox = function(collectionName, minlon, maxlon, minlat, maxlat, callback){
     console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
     this.getCollection(collectionName, function(error, the_collection) {
