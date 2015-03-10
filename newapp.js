@@ -105,6 +105,34 @@ app.get('/:collection', function(req, res) {
    	});
 });
 
+// Checking if there is a duplicate. By giving it a substring of someword. 
+// /:collection/findDuplicate? longitude=    & latitude=
+app.get('/:collection/findDuplicate', function(req, res) {
+    var tokens = req.body; // takes in an array of string
+    var params = req.params;
+    var collection = params.collection;
+    var url_parts = url.parse(req.url, true);
+    var longitude = url_parts.query.longitude;
+    var latitude = url_parts.query.latitude;
+
+    if (!checkGaiaDB(collection)) {
+        res.send(400, {error: 'no such collection'}); 
+    }
+
+    if (!longitude || !latitude) {
+        res.send(400, {error: 'no longitude or latitude specified'});
+    }
+
+    collectionDriver.findNearby(req.params.collection, longitude, latitude, function(error, objs) { 
+        if (error) {
+            res.send(400, error);
+        } else {
+            res.set('Content-Type','application/json');
+            res.send(200, objs);
+        }
+    });
+});
+
 // Get specific item. This returns everything
 app.get('/:collection/getitem', function(req, res) { 
     var params = req.params;

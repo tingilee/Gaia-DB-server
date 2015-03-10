@@ -74,6 +74,39 @@ CollectionDriver.prototype.findAll = function(collectionName, callback) {
     });
 };
 
+CollectionDriver.prototype.findNearby = function(collectionName, longitude, latitude, token_array, callback) {
+    var lon_gap = 0.00008
+    var lat_gap = 0.00005
+    var minlon = longitude - lon_gap
+    var maxlon = longitude + lon_gap
+    var minlat = latitude - lat_gap
+    var maxlat = latitude + lat_gap
+
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) {
+            callback(error);
+        } else {
+            the_collection.find({'loc.coordinates' :
+                {$geoWithin :
+                    {$geometry :
+                       {type : "Polygon" ,
+                           coordinates : [[[minlon, minlat] , 
+                                           [minlon, maxlat], 
+                                           [maxlon, maxlat],
+                                           [maxlon, minlat],
+                                           [minlon, minlat]]]                                     
+                        } 
+                    } 
+                } 
+            , 'title' : { $in: token_array } }).toArray( function(error, results) {
+                                                if (error) 
+                                                    callback(error); 
+                                                else
+                                                    callback(null, results); });
+        }
+    });
+}
+
 CollectionDriver.prototype.findInBoxGivenCategory = function(collectionName, minlon, maxlon, minlat, maxlat, category, callback) {
     console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
     this.getCollection(collectionName, function(error, the_collection) {
