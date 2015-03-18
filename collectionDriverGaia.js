@@ -6,11 +6,11 @@ var ObjectID = require('mongodb').ObjectID;
 
 {   _id:                ,   
     time_created:           ,       
-    Coordinates: [longitude, latitude]  ,   
-    Title:      ,
-    Category:       ,
+    Coordinates: [longitude (floar), latitude(float)]  ,   
+    Title:      string,
+    Category:   [String]    ,
     Rank:       ,
-    Media:  [{  Source: facebook
+    Media:  [  Source: facebook
                 Text:
                 Tags:
                 Image_url:
@@ -74,39 +74,6 @@ CollectionDriver.prototype.findAll = function(collectionName, callback) {
     });
 };
 
-CollectionDriver.prototype.findNearby = function(collectionName, longitude, latitude, token_array, callback) {
-    var lon_gap = 0.00008
-    var lat_gap = 0.00005
-    var minlon = longitude - lon_gap
-    var maxlon = longitude + lon_gap
-    var minlat = latitude - lat_gap
-    var maxlat = latitude + lat_gap
-
-    this.getCollection(collectionName, function(error, the_collection) {
-        if (error) {
-            callback(error);
-        } else {
-            the_collection.find({'loc.coordinates' :
-                {$geoWithin :
-                    {$geometry :
-                       {type : "Polygon" ,
-                           coordinates : [[[minlon, minlat] , 
-                                           [minlon, maxlat], 
-                                           [maxlon, maxlat],
-                                           [maxlon, minlat],
-                                           [minlon, minlat]]]                                     
-                        } 
-                    } 
-                } 
-            , 'title' : { $in: token_array } }).toArray( function(error, results) {
-                                                if (error) 
-                                                    callback(error); 
-                                                else
-                                                    callback(null, results); });
-        }
-    });
-}
-
 CollectionDriver.prototype.findInBoxGivenCategory = function(collectionName, minlon, maxlon, minlat, maxlat, category, callback) {
     console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
     this.getCollection(collectionName, function(error, the_collection) {
@@ -125,7 +92,7 @@ CollectionDriver.prototype.findInBoxGivenCategory = function(collectionName, min
                         } 
                     } 
                 } 
-            , 'category' : category}).toArray( function(error, results) {
+            , 'category' : category}).toArray( function(error, results) {       // this should return only category has an element matching... 
                                                 if (error) 
                                                     callback(error); 
                                                 else
@@ -255,6 +222,31 @@ CollectionDriver.prototype.update = function(collectionName, obj, entityId, call
 
 //  ADD this media item info to the media array
 //  essentially each post is an item
+// 
+CollectionDriver.prototype.addCategoryBulk = function(collectionName, category_array, source, id, callback) {
+    var obj = null;
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) callback(error);
+        else {
+            var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$"); //B
+            if (!checkForHexRegExp.test(id)) {
+                callback({error: "invalid id"});
+            } else {
+                //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
+                var update = { $push : {} };
+                update.$push['category'] = { $each: category_array}; 
+                the_collection.update(  {'_id':ObjectID(id)}, update,
+                                        function(error,doc) { 
+                                            if (error) callback(error);
+                                            else callback(null, doc);
+                                        });
+            }
+        }
+    });
+};
+
+//  ADD this media item info to the media array
+//  essentially each post is an item
 CollectionDriver.prototype.addMedia = function(collectionName, media_item, source, id, callback) {
     var obj = null;
     this.getCollection(collectionName, function(error, the_collection) {
@@ -287,6 +279,9 @@ CollectionDriver.prototype.addMediaBulk = function(collectionName, media_item, s
             if (!checkForHexRegExp.test(id)) {
                 callback({error: "invalid id"});
             } else {
+                console.log("tryyyyying");
+                console.log('media.' + source);
+                console.log("id: " + id);
                 //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
                 var update = { $push : {} };
                 update.$push['media.' + source] = { $each: media_item}; 
