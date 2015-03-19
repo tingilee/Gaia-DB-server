@@ -173,7 +173,7 @@ app.get('/:collection/filter/:method', function(req, res) {
         var minlat = filterFloat(params.minlat);
         var maxlat = filterFloat(params.maxlat);
         var category = params.category;
-        console.log("params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+        console.log("search in box -- params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
         if (category) { 
             collectionDriver.findInBoxGivenCategory(req.params.collection, minlon, maxlon, minlat, maxlat, category, function(error, objs) { 
                 if (error) {
@@ -195,10 +195,28 @@ app.get('/:collection/filter/:method', function(req, res) {
             });
         
         }
-            
+    } else if (method == 'top') {
+        var minlon = filterFloat(params.minlon);
+        var maxlon = filterFloat(params.maxlon);
+        var minlat = filterFloat(params.minlat);
+        var maxlat = filterFloat(params.maxlat);
+        var number = parseInt(params.num);
+        var category = params.category;
+        console.log("search in top -- params:  " + minlon + " " + minlat + " " + maxlon + " " + maxlat);
+        if (!category) { 
+            res.send(400, {"error" : "no category specified"});
+            return;
+        } 
 
+        collectionDriver.getTop(req.params.collection, minlon, maxlon, minlat, maxlat, category, number, function(error, objs) { 
+            if (error) {
+                res.send(400, error);
+            } else {
+                // res.set('Content-Type','application/json');
+                res.send(200, objs); 
+            }
+        });
     }
-
 });
 
 /***************************        POST        ***************************/

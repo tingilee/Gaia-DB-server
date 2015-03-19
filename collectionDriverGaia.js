@@ -47,7 +47,7 @@ CollectionDriver.prototype.addLocation2dsphereIndex = function(collectionName, c
     this.db.collection(collectionName, function(error, the_collection) {
         if( error ) callback(error);
         else {
-            the_collection.ensureIndex( { 'loc.coordinates': "2dsphere" }, {bits: 32}, function(error, results) { // this returns a write concern obj
+            the_collection.ensureIndex( { 'loc.coordinates': "2dsphere", 'rank': -1 }, {bits: 32}, function(error, results) { // this returns a write concern obj
                 if (error) callback(error);
                 else callback(null, results);
             });
@@ -168,6 +168,35 @@ CollectionDriver.prototype.get = function(collectionName, id, callback) {
         }
     });
 };
+
+CollectionDriver.prototype.getTop = function(collectionName, minlon, maxlon, minlat, maxlat, category, num, callback) {
+
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) callback(error);
+        else {
+            console.log("ready to getTop");
+            // db.things.find().sort({someField:1}).limit(10)
+            //.sort({'rank': -1 }).limit(10)
+            the_collection.find({'loc.coordinates' :
+                {$geoWithin :
+                    {$geometry :
+                       {type : "Polygon" ,
+                           coordinates : [[[minlon, minlat] , 
+                                           [minlon, maxlat], 
+                                           [maxlon, maxlat],
+                                           [maxlon, minlat],
+                                           [minlon, minlat]]]                                     
+                        } 
+                    } 
+                } 
+            , 'category' : category}).sort({'rank': -1 }).limit(num).toArray( function(error, results) {       // this should return only category has an element matching... 
+                                                if (error) 
+                                                    callback(error); 
+                                                else
+                                                    callback(null, results); });
+        }
+    });   
+}
 
 /**************** INSERT/SAVE ****************/
 
