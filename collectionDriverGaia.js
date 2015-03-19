@@ -47,7 +47,7 @@ CollectionDriver.prototype.addLocation2dsphereIndex = function(collectionName, c
     this.db.collection(collectionName, function(error, the_collection) {
         if( error ) callback(error);
         else {
-            the_collection.ensureIndex( { 'loc.coordinates': "2dsphere" }, {bits: 32}, function(error, results) { // this returns a write concern obj
+            the_collection.ensureIndex( { 'loc.coordinates': "2dsphere", 'rank': -1 }, {bits: 32}, function(error, results) { // this returns a write concern obj
                 if (error) callback(error);
                 else callback(null, results);
             });
