@@ -231,8 +231,8 @@ app.post('/:collection', function(req, res) {
 
     // for checking duplicates
     var distance_threshold = 0.7;
-    var lon_gap = 0.0003      
-    var lat_gap = 0.0001
+    var lon_gap = 0.0006     
+    var lat_gap = 0.0006
 
 
     // In order to do for loops synchronously
@@ -313,7 +313,7 @@ app.post('/:collection', function(req, res) {
                             db_object['title'] = client_object.title;
                             db_object['category'] = client_object.category;     // this is an array
                             db_object['loc'] = {type: 'Point', coordinates: [client_object.longitude, client_object.latitude]};
-                            db_object['rank'] = 0;    // initialize rank to 0 
+                            db_object['rank'] = 1;    // initialize rank to 0 
                             db_object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
                             
                             var media_array = [];

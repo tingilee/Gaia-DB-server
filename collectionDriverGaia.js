@@ -256,6 +256,7 @@ CollectionDriver.prototype.addMedia = function(collectionName, media_item, sourc
             if (!checkForHexRegExp.test(id)) {
                 callback({error: "invalid id"});
             } else {
+                // update( {'_id' : id, { $push : {'media.' + source : media_item } } })
                 var update = { $push : {} };
                 update.$push['media.' + source] = media_item; 
                 the_collection.update(  {'_id':ObjectID(id)}, update,
@@ -283,13 +284,30 @@ CollectionDriver.prototype.addMediaBulk = function(collectionName, media_item, s
                 console.log('media.' + source);
                 console.log("id: " + id);
                 //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
-                var update = { $push : {} };
-                update.$push['media.' + source] = { $each: media_item}; 
-                the_collection.update(  {'_id':ObjectID(id)}, update,
-                                        function(error,doc) { 
-                                            if (error) callback(error);
-                                            else callback(null, doc);
-                                        });
+                // update( {'_id' : id, { $push : {'media.' + source : media_item } } })
+                // .find( { $where: "this.name.length > 1" } );
+
+                the_collection.findOne({'_id':ObjectID(id)}, function(error,doc) { 
+                    if (error) callback(error);
+                    else {
+                        console.log("find one done");
+                        var obj = doc;
+                        if (obj.media[source]) { // if does exist... 
+                            console.log("Media " + source + " exists. Do nothing. ");
+                            // the_collection.update(  {'_id':ObjectID(id)},
+                            //                         {$set : { 'media.' + source : media_item} }    );
+                            callback(null, doc);
+                        } else {
+                            console.log("Media " + source + " does not exists. Simply add.");
+                            var update = { $push : {} };
+                            update.$push['media.' + source] = { $each: media_item}; 
+                            the_collection.update(  {'_id':ObjectID(id)}, update, function(error,doc) { 
+                                                                                    if (error) callback(error);
+                                                                                    else callback(null, doc);
+                                                                                });
+                        }
+                    }
+                });  
             }
         }
     });
