@@ -231,8 +231,8 @@ app.post('/:collection', function(req, res) {
 
     // for checking duplicates
     var distance_threshold = 0.7;
-    var lon_gap = 0.00075     
-    var lat_gap = 0.00075    
+    var lon_gap = 0.001     
+    var lat_gap = 0.001    
 
 
     // In order to do for loops synchronously
