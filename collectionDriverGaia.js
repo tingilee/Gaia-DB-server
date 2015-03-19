@@ -365,18 +365,26 @@ CollectionDriver.prototype.updateMedia = function(collectionName, media_item, id
 }; 
 
 //  update rank to increase or decrease by the given inc_value
-CollectionDriver.prototype.incrementRank = function(collectionName, inc_value, id, entityId, callback) {
+CollectionDriver.prototype.incrementRank = function(collectionName, inc_value, id, callback) {
     var obj = null;
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) callback(error);
         else {
-            var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$"); //B
+            var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$"); 
             if (!checkForHexRegExp.test(id)) {
                 callback({error: "invalid id"});
             } else {
                 // find which index on the array has the same source
+                id = "550a78cf8029f27c169d9b32";
+                console.log("id: " + id);
+                console.log("incvalue: " + inc_value);
                 the_collection.update(  {'_id':ObjectID(id)},
-                                        { $inc: { rank: inc_value } }    );
+                                        { $inc: { 'rank': inc_value } }, function(error,doc) { 
+                                                                            if (error) callback(error);
+                                                                            else {
+                                                                                console.log(doc);
+                                                                                callback(null, doc);
+                                                                            }});
             }
         }
     });
@@ -384,7 +392,32 @@ CollectionDriver.prototype.incrementRank = function(collectionName, inc_value, i
 
 //  update the essential fields of the item in case of emergency
 //  field can be 'title', 'category', 'coordinates'
-CollectionDriver.prototype.updateField = function(collectionName, field, field_value, id, entityId, callback) {
+CollectionDriver.prototype.updateRank = function(collectionName, field_value, id, callback) {
+    var obj = null;
+    this.getCollection(collectionName, function(error, the_collection) {
+        if (error) callback(error);
+        else {
+            var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$"); 
+            if (!checkForHexRegExp.test(id)) {
+                callback({error: "invalid id"});
+            } else {
+                // find which index on the array has the same source
+                the_collection.update(  {'_id':ObjectID(id)},
+                                        {$set : { 'rank' : field_value} }, function(error,doc) { 
+                                                                            if (error) callback(error);
+                                                                            else {
+                                                                                console.log(doc);
+                                                                                callback(null, doc);
+                                                                            }
+                                                                        });
+            }
+        }
+    });
+}; 
+
+//  update the essential fields of the item in case of emergency
+//  field can be 'title', 'category', 'coordinates'
+CollectionDriver.prototype.updateField = function(collectionName, field, field_value, id, callback) {
     var obj = null;
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) callback(error);
@@ -393,9 +426,17 @@ CollectionDriver.prototype.updateField = function(collectionName, field, field_v
             if (!checkForHexRegExp.test(id)) {
                 callback({error: "invalid id"});
             } else {
+                console.log("aaaa");
                 // find which index on the array has the same source
                 the_collection.update(  {'_id':ObjectID(id)},
-                                        {$set : { field : field_value} }    );
+                                        {$set : { field : field_value} }, function(error,doc) { //B
+                                                                            if (error) callback(error);
+                                                                            else {
+                                                                                console.log("booom");
+                                                                                console.log(doc);
+                                                                                callback(null, doc);
+                                                                            }
+                                                                        });
             }
         }
     });

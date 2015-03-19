@@ -417,6 +417,22 @@ app.put('/:collection/incrementRank', function(req, res) {
     });
 });
 
+//  Updates the rank by incrementing or decrementing by that value
+//  ?id= &value=
+app.put('/:collection/updateRank', function(req, res) {
+    var collection = req.params.collection;
+    var url_parts = url.parse(req.url, true);
+    var params = url_parts.query;
+    var new_value = params.value;
+    var entityid = params.id;
+    console.log("updateRank " + new_value);
+
+    collectionDriver.updateRank(collection, new_value, entityid, function(error, objs) {  
+        if (error) { res.send(400, error); }
+        else { res.send(200, objs); }
+    });
+});
+
 // Update the media information given the entity id and the source 
 // ?id= &source=
 // not really needed...
