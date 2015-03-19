@@ -232,14 +232,25 @@ CollectionDriver.prototype.addCategoryBulk = function(collectionName, category_a
             if (!checkForHexRegExp.test(id)) {
                 callback({error: "invalid id"});
             } else {
-                //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
-                var update = { $push : {} };
-                update.$push['category'] = { $each: category_array}; 
-                the_collection.update(  {'_id':ObjectID(id)}, update,
-                                        function(error,doc) { 
-                                            if (error) callback(error);
-                                            else callback(null, doc);
-                                        });
+                the_collection.findOne({'_id':ObjectID(id)}, function(error,doc) { 
+                    if (error) callback(error);
+                    else {
+                        var array = doc.category 
+                        var new_array = [];
+                        for (var i = 0; i < array.length; i++) {
+                            indexOf("a");
+                        }
+                        //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
+                        var update = { $push : {} };
+                        update.$push['category'] = { $each: category_array}; 
+                        the_collection.update(  {'_id':ObjectID(id)}, update,
+                                                function(error,doc) { 
+                                                    if (error) callback(error);
+                                                    else callback(null, doc);
+                                                });
+
+                    }
+                }
             }
         }
     });

@@ -236,12 +236,14 @@ app.post('/:collection', function(req, res) {
 
 
     // In order to do for loops synchronously
-    index = 0;
-    process(index); 
+    var index = 0;
+    var response_array = [];
+    process(index, response_array); 
 
-    function process(index) {
+    function process(index, response_array) {
         if (index >= length) {
             console.log("The cycle ended");
+            res.send(201, response_array);
         } else {
             var client_object = array[index];
             var db_object = {};
@@ -267,6 +269,7 @@ app.post('/:collection', function(req, res) {
                 collectionDriver.findInBox(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
                     if (error) {
                         res.send(400, error);
+                        // console.log("error");
                     } else {
                         var duplicate_exists = false;
                         console.log("there is " + objs.length + " items in the radius. ");
@@ -299,8 +302,8 @@ app.post('/:collection', function(req, res) {
                                     console.log(media_array);
                                     collectionDriver.addMediaBulk(collection, media_array, media_source, max_similarity['id'], function(error, objs) {
                                         collectionDriver.addCategoryBulk(collection, client_object.category, max_similarity['id'], function(error, objs) {
-                                            if (error) {  res.send(400, error);  } 
-                                            else {   res.send(201, objs); }
+                                            if (error) {  /* res.send(400, error); */ } 
+                                            else {   /* res.send(201, objs); */ response_array.push(objs); }
                                             index = index + 1;
                                             process(index);
                                             return;
@@ -323,8 +326,8 @@ app.post('/:collection', function(req, res) {
                             db_object['media'][client_object.source] = media_array;
                             console.log("there's no duplciate. adding media_array: "  + media_array);
                             collectionDriver.save(collection, db_object, function(err, docs) {
-                                if (err) { res.send(400, err);  } 
-                                else {  res.send(201, docs); }
+                                if (err) { /* res.send(400, err); */ } 
+                                else {  /* res.send(201, docs); */ response_array.push(docs);}
                                 index = index + 1;
                                 process(index);
                                 return;
