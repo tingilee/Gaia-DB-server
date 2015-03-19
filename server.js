@@ -333,7 +333,7 @@ app.post('/:collection', function(req, res) {
                             db_object['title'] = client_object.title;
                             db_object['category'] = client_object.category;     // this is an array
                             db_object['loc'] = {type: 'Point', coordinates: [client_object.longitude, client_object.latitude]};
-                            db_object['rank'] = 1;    // initialize rank to 0 
+                            db_object['rank'] = 0;    // initialize rank to 0 
                             db_object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
                             
                             var media_array = [];
