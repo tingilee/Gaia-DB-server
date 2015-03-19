@@ -289,7 +289,7 @@ app.post('/:collection', function(req, res) {
                                 console.log("there is a duplicate with id "  + max_similarity['id']);
                                 duplicate_exists = true;
                                 var media_source = client_object.source;
-                                var media_array = client_object.media_array;
+                                var media_array = client_object.media;
                                 if (!media_array) {
                                     // ERROR!!!!
                                     console.log("ERROR: there should be a media array!!");
@@ -313,14 +313,14 @@ app.post('/:collection', function(req, res) {
                             db_object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
                             
                             var media_array = [];
-                            if (client_object.media_array) {
-                                media_array = client_object.media_array;
+                            if (client_object.media) {
+                                media_array = client_object.media;
                             } 
                             db_object['media'][client_object.source] = media_array;
-                            console.log(media_array);
+                            console.log("there's no duplciate. adding media_array: "  + media_array);
                             collectionDriver.save(collection, db_object, function(err, docs) {
                                 if (err) { res.send(400, err);  } 
-                                else {  res.send(201, docs); console.log("things are in the DB"); }
+                                else {  res.send(201, docs); }
                                 index = index + 1;
                                 process(index);
                                 return;
