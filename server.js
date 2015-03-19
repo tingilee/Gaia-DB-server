@@ -441,7 +441,7 @@ app.put('/:collection/updateRank', function(req, res) {
     var collection = req.params.collection;
     var url_parts = url.parse(req.url, true);
     var params = url_parts.query;
-    var new_value = filterFloat(params.value);
+    var new_value = parseFloat(params.value);
     var entityid = params.id;
     console.log("updateRank " + new_value);
 
