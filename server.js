@@ -108,30 +108,6 @@ app.get('/:collection', function(req, res) {
    	});
 });
 
-// Checking if there is a duplicate. By giving it a substring of someword. 
-// /:collection/findDuplicate? longitude=    & latitude=
-// Returns a list of json... match the titles on the client side. 
-
-// app.get('/:collection/findDuplicateTwo', function(req, res) {
-//     var token_array = req.body; // takes in an array of string
-//     var params = req.params;
-//     var collection = params.collection;
-//     var url_parts = url.parse(req.url, true);
-//     var longitude = filterFloat(url_parts.query.longitude);
-//     var latitude = filterFloat(url_parts.query.latitude);
-
-//     if (!checkGaiaDB(collection)) {
-//         res.send(400, {error: 'no such collection'}); 
-//     }
-
-//     var criteria = [];
-//     for (var i = 0; i < token_array.length; i++) {
-//         var match_substring = token_array[i];
-//         match_substring = match_substring + "$";
-//         criteria[i] = new RegExp(match_substring);
-//     }  
-// });
-
 // Get specific item. This returns everything
 app.get('/:collection/getitem', function(req, res) { 
     var params = req.params;
@@ -233,7 +209,7 @@ app.get('/:collection/filter/:method', function(req, res) {
 //  title: <place name>     ,
 //  category: [coffee, cafe...],
 //  source:   <source>,     (optional)
-//  media_array: [...]      (optional)
+//  media_array: [...],      (optional)
 //  location_id:  <id>      (optional)}
 app.post('/:collection', function(req, res) {
     var obj = req.body;
@@ -253,94 +229,111 @@ app.post('/:collection', function(req, res) {
         array = obj;
     }
 
-    for (var i = 0; i < length; i++) {
-        var client_object = array[i];
-        var db_object = {};
-        // filter and only put the qualified ones into the array
-        if (client_object.title && client_object.category && client_object.longitude && client_object.latitude) { // need category??!!
-            var distance_threshold = 0.7;
-            
-            console.log("checking duplicates");
-            var lon_gap = 0.00008       
-            var lat_gap = 0.00005
-            var longitude = client_object.longitude;
-            var latitude = client_object.latitude;
-            var title = client_object.title;
-            
-            var minlon = filterFloat(longitude) - lon_gap;
-            var maxlon = filterFloat(longitude) + lon_gap;
-            var minlat = filterFloat(latitude) - lat_gap;
-            var maxlat = filterFloat(latitude) + lat_gap;
-            console.log("findDuplicate() -- longitude: " + longitude + " latitude: " + latitude);
+    // for checking duplicates
+    var distance_threshold = 0.7;
+    var lon_gap = 0.0003      
+    var lat_gap = 0.00006
 
-            if (!client_object.category.length) {
-                res.send(400, {'error': 'category should be an array'}); 
-                return;
-            }
-            // First checks if there's duplicates in the DB, if there is cluster it. 
-            collectionDriver.findInBox(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
-                if (error) {
-                    res.send(400, error);
-                } else {
-                    var duplicate_exists = false;
-                    console.log("there is " + objs.length + " items in the radius. ");
-                    if (objs.length > 0) {        
-                        console.log("objs " + objs);
-                        var to_be_inserted_title = title; // .tokenizeAndStem().sort();
-                        var max_similarity = {'distance' : 0.7, 'id' : ''};
-                        for (var i = 0; i < objs.length; i++) { 
-                            var db_item_title = objs[i].title; // .tokenizeAndStem().sort()
-                            console.log("DB item title -- " + db_item_title + "To-be-inserted item title -- " + to_be_inserted_title);
-                            var distance = natural.JaroWinklerDistance(to_be_inserted_title, db_item_title);
-                            console.log("distance: "+ distance);
-                            if (distance >  max_similarity['distance']) { 
-                                console.log("***** there's a duplicate *****");
-                                console.log("{distance: " + distance + ", id: " + objs[i]._id);
-                                max_similarity['distance'] = distance;
-                                max_similarity['id'] = objs[i]._id.toString();
-                            }
-                        }  
-                        if (max_similarity['distance'] > 0.7) {   // there's at least one item that's a fit, update to choose the max one
-                            console.log("there is a duplicate with id "  + max_similarity['id']);
-                            duplicate_exists = true;
-                            var media_source = client_object.source;
-                            var media_array = client_object.media_array;
-                            if (!media_array) {
-                                // ERROR!!!!
-                                console.log("ERROR: there should be a media array!!");
-                            } else {
-                                console.log(media_array);
-                                collectionDriver.addMediaBulk(collection, media_array, media_source, max_similarity['id'], function(error, objs) {
-                                    if (error) {  res.send(400, error);  } 
-                                    else {   res.send(201, objs); }
-                                });
+    // In order to do for loops synchronously
+    index = 0;
+    process(index); 
+
+    function process(index) {
+        if (index >= length) {
+            console.log("The cycle ended");
+        } else {
+            var client_object = array[index];
+            var db_object = {};
+            // filter and only put the qualified ones into the array
+            if (client_object.title && client_object.category && client_object.longitude && client_object.latitude) { // need category??!!
+                
+                var longitude = client_object.longitude;
+                var latitude = client_object.latitude;
+                var title = client_object.title;
+                
+                var minlon = filterFloat(longitude) - lon_gap;
+                var maxlon = filterFloat(longitude) + lon_gap;
+                var minlat = filterFloat(latitude) - lat_gap;
+                var maxlat = filterFloat(latitude) + lat_gap;
+                console.log("I: " + index + "  findDuplicate() -- longitude: " + longitude + " latitude: " + latitude);
+
+                if (!client_object.category.length) {
+                    res.send(400, {'error': 'category should be an array'}); 
+                    return;
+                }
+
+                // First checks if there's duplicates in the DB, if there is, cluster it. 
+                collectionDriver.findInBox(req.params.collection, minlon, maxlon, minlat, maxlat, function(error, objs) { 
+                    if (error) {
+                        res.send(400, error);
+                    } else {
+                        var duplicate_exists = false;
+                        console.log("there is " + objs.length + " items in the radius. ");
+                        if (objs.length > 0) {        
+                            console.log("objs " + objs);
+                            var to_be_inserted_title = title; // .tokenizeAndStem().sort();
+                            var max_similarity = {'distance' : 0.7, 'id' : ''};
+                            for (var i = 0; i < objs.length; i++) { 
+                                var db_item_title = objs[i].title; // .tokenizeAndStem().sort()
+                                console.log("DB item title -- " + db_item_title + "To-be-inserted item title -- " + to_be_inserted_title);
+                                var distance = natural.JaroWinklerDistance(to_be_inserted_title, db_item_title);
+                                console.log("distance: "+ distance);
+                                if (distance >  max_similarity['distance']) { 
+                                    console.log("***** there's a duplicate *****");
+                                    console.log("{distance: " + distance + ", id: " + objs[i]._id);
+                                    max_similarity['distance'] = distance;
+                                    max_similarity['id'] = objs[i]._id.toString();
+                                }
+                            }  
+                            if (max_similarity['distance'] > 0.7) {   // there's at least one item that's a fit, update to choose the max one
+                                console.log("there is a duplicate with id "  + max_similarity['id']);
+                                duplicate_exists = true;
+                                var media_source = client_object.source;
+                                var media_array = client_object.media_array;
+                                if (!media_array) {
+                                    // ERROR!!!!
+                                    console.log("ERROR: there should be a media array!!");
+                                } else {
+                                    console.log(media_array);
+                                    collectionDriver.addMediaBulk(collection, media_array, media_source, max_similarity['id'], function(error, objs) {
+                                        if (error) {  res.send(400, error);  } 
+                                        else {   res.send(201, objs); }
+                                        index = index + 1;
+                                        process(index);
+                                        return;
+                                    });
+                                }
                             }
                         }
+                        if (!duplicate_exists) {           // there's no duplicate!! 
+                            db_object['title'] = client_object.title;
+                            db_object['category'] = client_object.category;     // this is an array
+                            db_object['loc'] = {type: 'Point', coordinates: [client_object.longitude, client_object.latitude]};
+                            db_object['rank'] = 0;    // initialize rank to 0 
+                            db_object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
+                            
+                            var media_array = [];
+                            if (client_object.media_array) {
+                                media_array = client_object.media_array;
+                            } 
+                            db_object['media'][client_object.source] = media_array;
+                            console.log(media_array);
+                            collectionDriver.save(collection, db_object, function(err, docs) {
+                                if (err) { res.send(400, err);  } 
+                                else {  res.send(201, docs); console.log("things are in the DB"); }
+                                index = index + 1;
+                                process(index);
+                                return;
+                            }); 
+                        }
                     }
-                    if (!duplicate_exists) {           // there's no duplicate!! 
-                        db_object['title'] = client_object.title;
-                        db_object['category'] = client_object.category;     // this is an array
-                        db_object['loc'] = {type: 'Point', coordinates: [client_object.longitude, client_object.latitude]};
-                        db_object['rank'] = 0;    // initialize rank to 0 
-                        db_object['media'] = {};   // empty arrays     // "yelp": [], "google": [], "twitter": [], "facebook": [], "instagram": []
-                        
-                        var media_array = [];
-                        if (client_object.media_array) {
-                            media_array = client_object.media_array;
-                        } 
-                        db_object['media'][client_object.source] = media_array;
-                        collectionDriver.save(collection, db_object, function(err, docs) {
-                            if (err) { res.send(400, err);  } 
-                            else {  res.send(201, docs); }
-                        }); 
-                    }
-                }
-            });
-            /************************************************************************/
-        } else {
-            error_message = {'error' : 'requires object\'s title, longitude, latitude, category'};
+                });
+            } else {
+                error_message = {'error' : 'requires object\'s title, longitude, latitude, category'};
+            }            
         }
     }
+
     //     // for saving an array at once (if not checking duplicates)            
     //     collectionDriver.saveBulk(collection, db_insert_array, function(err, docs) {
     //         if (err) { res.send(400, err);  } 
