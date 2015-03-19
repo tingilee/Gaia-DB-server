@@ -237,13 +237,12 @@ app.post('/:collection', function(req, res) {
 
     // In order to do for loops synchronously
     var index = 0;
-    var response_array = [];
-    process(index, response_array); 
+    process(index); 
 
-    function process(index, response_array) {
+    function process(index) {
         if (index >= length) {
             console.log("The cycle ended");
-            res.send(201, response_array);
+            res.send(201, {"success": "successfully inserted an array of " + length + " items"});
         } else {
             var client_object = array[index];
             var db_object = {};
@@ -303,7 +302,7 @@ app.post('/:collection', function(req, res) {
                                     collectionDriver.addMediaBulk(collection, media_array, media_source, max_similarity['id'], function(error, objs) {
                                         collectionDriver.addCategoryBulk(collection, client_object.category, max_similarity['id'], function(error, objs) {
                                             if (error) {  /* res.send(400, error); */ } 
-                                            else {   /* res.send(201, objs); */ response_array.push(objs); }
+                                            else {    /* res.send(201, objs); */ console.log("Added media and category for object_id " + max_similarity['id']); }  
                                             index = index + 1;
                                             process(index);
                                             return;
@@ -327,7 +326,7 @@ app.post('/:collection', function(req, res) {
                             console.log("there's no duplciate. adding media_array: "  + media_array);
                             collectionDriver.save(collection, db_object, function(err, docs) {
                                 if (err) { /* res.send(400, err); */ } 
-                                else {  /* res.send(201, docs); */ response_array.push(docs);}
+                                else {  /* res.send(201, docs); */ console.log("Added new location for object_id " + docs._id.toString());}
                                 index = index + 1;
                                 process(index);
                                 return;

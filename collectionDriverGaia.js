@@ -252,7 +252,7 @@ CollectionDriver.prototype.addCategoryBulk = function(collectionName, category_a
                                                 });
 
                     }
-                }
+                });
             }
         }
     });
