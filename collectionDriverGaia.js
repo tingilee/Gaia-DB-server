@@ -235,14 +235,16 @@ CollectionDriver.prototype.addCategoryBulk = function(collectionName, category_a
                 the_collection.findOne({'_id':ObjectID(id)}, function(error,doc) { 
                     if (error) callback(error);
                     else {
-                        var array = doc.category 
+                        var array = doc.category;
                         var new_array = [];
-                        for (var i = 0; i < array.length; i++) {
-                            indexOf("a");
+                        for (var i = 0; i < category_array.length; i++) {
+                            if ( array.indexOf(category_array[i]) == -1 ) { // does not exist in the array
+                                new_array.push(category_array[i]);
+                            }
                         }
                         //  { $push: { scores: { $each: [ 90, 92, 85 ] } } }
                         var update = { $push : {} };
-                        update.$push['category'] = { $each: category_array}; 
+                        update.$push['category'] = { $each: new_array}; 
                         the_collection.update(  {'_id':ObjectID(id)}, update,
                                                 function(error,doc) { 
                                                     if (error) callback(error);
