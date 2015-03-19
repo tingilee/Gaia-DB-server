@@ -209,7 +209,7 @@ app.get('/:collection/filter/:method', function(req, res) {
 //  title: <place name>     ,
 //  category: [coffee, cafe...],
 //  source:   <source>,     (optional)
-//  media_array: [...],      (optional)
+//  media: [...],      (optional)
 //  location_id:  <id>      (optional)}
 app.post('/:collection', function(req, res) {
     var obj = req.body;
@@ -288,6 +288,7 @@ app.post('/:collection', function(req, res) {
                             if (max_similarity['distance'] > 0.7) {   // there's at least one item that's a fit, update to choose the max one
                                 console.log("there is a duplicate with id "  + max_similarity['id']);
                                 duplicate_exists = true;
+                                var category_array = client_object.category;
                                 var media_source = client_object.source;
                                 var media_array = client_object.media;
                                 if (!media_array) {
@@ -296,11 +297,13 @@ app.post('/:collection', function(req, res) {
                                 } else {
                                     console.log(media_array);
                                     collectionDriver.addMediaBulk(collection, media_array, media_source, max_similarity['id'], function(error, objs) {
-                                        if (error) {  res.send(400, error);  } 
-                                        else {   res.send(201, objs); }
-                                        index = index + 1;
-                                        process(index);
-                                        return;
+                                        collectionDriver.addCategoryBulk(collection, client_object.category, max_similarity['id'], function(error, objs) {
+                                            if (error) {  res.send(400, error);  } 
+                                            else {   res.send(201, objs); }
+                                            index = index + 1;
+                                            process(index);
+                                            return;
+                                        });
                                     });
                                 }
                             }

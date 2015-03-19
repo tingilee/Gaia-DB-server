@@ -223,7 +223,7 @@ CollectionDriver.prototype.update = function(collectionName, obj, entityId, call
 //  ADD this media item info to the media array
 //  essentially each post is an item
 // 
-CollectionDriver.prototype.addCategoryBulk = function(collectionName, category_array, source, id, callback) {
+CollectionDriver.prototype.addCategoryBulk = function(collectionName, category_array, id, callback) {
     var obj = null;
     this.getCollection(collectionName, function(error, the_collection) {
         if (error) callback(error);
